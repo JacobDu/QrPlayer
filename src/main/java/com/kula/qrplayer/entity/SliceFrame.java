@@ -8,24 +8,6 @@ package com.kula.qrplayer.entity;
 public class SliceFrame {
 
     /**
-     * Gets the timestamp.
-     * 
-     * @return the timestamp
-     */
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    /**
-     * Sets the timestamp.
-     * 
-     * @param timestamp the new timestamp
-     */
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    /**
      * Gets the index.
      * 
      * @return the index
@@ -60,9 +42,6 @@ public class SliceFrame {
     public void setSlice(byte[] slice) {
         this.slice = slice;
     }
-
-    /** The timestamp. unit is ms */
-    private long timestamp;
 
     /** The index. base on ZREO */
     private int index;

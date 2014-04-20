@@ -10,8 +10,8 @@ public enum CompressType {
     /** The gzip. */
     gzip,
 
-    /** The snoopy. */
-    snoopy,
+    /** The snappy. */
+    snappy,
 
     /** The zlib. */
     zlib,
