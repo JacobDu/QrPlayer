@@ -7,7 +7,7 @@
 	<name>QrPlayer</name>
 	<description>convert file into qr movie</description>
 	<build>
-		<testSourceDirectory>test/src/main/java</testSourceDirectory>
+		<testSourceDirectory>/src/test/java</testSourceDirectory>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
