@@ -80,21 +80,57 @@ public class LeadingFrame {
     }
 
     /**
-     * Gets the slice interval.
+     * Gets the orig file size.
      * 
-     * @return the slice interval
+     * @return the orig file size
      */
-    public long getSliceInterval() {
-        return sliceInterval;
+    public int getOrigFileSize() {
+        return origFileSize;
     }
 
     /**
-     * Sets the slice interval.
+     * Sets the orig file size.
      * 
-     * @param sliceInterval the new slice interval
+     * @param origFileSize the new orig file size
      */
-    public void setSliceInterval(long sliceInterval) {
-        this.sliceInterval = sliceInterval;
+    public void setOrigFileSize(int origFileSize) {
+        this.origFileSize = origFileSize;
+    }
+
+    /**
+     * Gets the compressed size.
+     * 
+     * @return the compressed size
+     */
+    public int getCompressedSize() {
+        return compressedSize;
+    }
+
+    /**
+     * Sets the compressed size.
+     * 
+     * @param compressedSize the new compressed size
+     */
+    public void setCompressedSize(int compressedSize) {
+        this.compressedSize = compressedSize;
+    }
+
+    /**
+     * Gets the slice duration.
+     * 
+     * @return the slice duration
+     */
+    public long getSliceDuration() {
+        return sliceDuration;
+    }
+
+    /**
+     * Sets the slice duration.
+     * 
+     * @param sliceDuration the new slice duration
+     */
+    public void setSliceDuration(long sliceDuration) {
+        this.sliceDuration = sliceDuration;
     }
 
     /** The version. */
@@ -109,6 +145,12 @@ public class LeadingFrame {
     /** The original file name. */
     private String origFileName;
 
-    /** The slice interval. unit is ms */
-    private long sliceInterval;
+    /** The slice duration. unit is ms */
+    private long sliceDuration;
+
+    /** The orig file size. */
+    private int origFileSize;
+
+    /** The compressed size. */
+    private int compressedSize;
 }

@@ -7,7 +7,12 @@
 	<name>QrPlayer</name>
 	<description>convert file into qr movie</description>
 	<build>
-		<testSourceDirectory>test/src/main/java</testSourceDirectory>
+		<testSourceDirectory>/src/test/java</testSourceDirectory>
+		<resources>
+			<resource>
+				<directory>src/main/config</directory>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -59,6 +64,10 @@
 			<artifactId>commons-lang3</artifactId>
 			<version>3.3.1</version>
 		</dependency>
-
+		<dependency>
+			<groupId>org.xerial.snappy</groupId>
+			<artifactId>snappy-java</artifactId>
+			<version>1.1.0.1</version>
+		</dependency>
 	</dependencies>
 </project>
