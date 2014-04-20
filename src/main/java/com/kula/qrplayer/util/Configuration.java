@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+import com.kula.qrplayer.entity.CompressType;
+
 /**
  * The Class Configuration.
  * 
@@ -45,6 +47,15 @@ public final class Configuration {
      */
     public int getSliceDuration() {
         return getInt("slice_duration", "200");
+    }
+
+    /**
+     * Gets the compress type.
+     * 
+     * @return the compress type
+     */
+    public CompressType getCompressType() {
+        return CompressType.valueOf(properties.getProperty("compress_type", "snappy"));
     }
 
     /**

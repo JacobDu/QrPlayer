@@ -25,6 +25,6 @@ public interface QrCodeGen {
     /**
      * Do clean.
      */
-    void doClean();
+    void cleanup();
 
 }

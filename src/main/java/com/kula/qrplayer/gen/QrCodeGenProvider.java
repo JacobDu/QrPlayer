@@ -18,18 +18,12 @@ public class QrCodeGenProvider implements QrCodeGen {
     /** The Constant VERSION. */
     public static final int VERSION = 0x01;
 
-    /** The Constant MAX_FILE_SIZE. */
-    public static final int MAX_FILE_SIZE = Configuration.getINSTANCE().getMaxFileSize();
-
     /** The Constant SLICE_DURATION. */
     public static final int SLICE_DURATION = Configuration.getINSTANCE().getSliceDuration();
 
     @Override
     public void init(final File input) {
-        // check file
-        if (!input.exists() || !input.canRead()) {
-            throw new IllegalArgumentException("input file is not accessible.");
-        }
+
         // detect file
         detector.detect(input);
         // split file.
@@ -55,9 +49,10 @@ public class QrCodeGenProvider implements QrCodeGen {
     }
 
     @Override
-    public void doClean() {
+    public void cleanup() {
         leadingFrame = null;
         sliceFrames.clear();
+        detector.cleanup();
     }
 
     /** The leading frame. */

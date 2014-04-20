@@ -54,4 +54,9 @@ public interface FileDetectable extends Iterable<SliceFrame> {
      */
     int getCompressedSize();
 
+    /**
+     * Cleanup.
+     */
+    void cleanup();
+
 }
