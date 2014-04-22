@@ -1,7 +1,5 @@
 package com.kula.qrplayer.gen;
 
-import java.io.File;
-
 /**
  * The Interface QrCodeGen.
  * Accept a file and generate a set of qrcode bitMatrixs.
@@ -10,21 +8,19 @@ import java.io.File;
  */
 public interface QrCodeGen {
 
-    /**
-     * Pre-parse the input file, and build leading frame.
-     * 
-     * @param input the input
-     */
-    void init(File input);
+	/**
+	 * Pre-parse the input file, and build leading frame.
+	 */
+	void init();
 
-    /**
-     * Generate.
-     */
-    void generate();
+	/**
+	 * Generate.
+	 */
+	void generate();
 
-    /**
-     * Do clean.
-     */
-    void cleanup();
+	/**
+	 * Do clean.
+	 */
+	void cleanup();
 
 }
