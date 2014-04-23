@@ -1,12 +1,19 @@
 package com.kula.qrplayer.gen;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import com.google.zxing.WriterException;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.kula.qrplayer.entity.LeadingFrame;
 import com.kula.qrplayer.entity.SliceFrame;
-import com.kula.qrplayer.entry.Parameters;
+import com.kula.qrplayer.qrcode.BinaryQrCodeWriter;
 import com.kula.qrplayer.util.Configuration;
 
 /**
@@ -22,11 +29,22 @@ public class QrCodeGenProvider implements QrCodeGen {
 	/** The Constant SLICE_DURATION. */
 	public static final int SLICE_DURATION = Configuration.getINSTANCE().getSliceDuration();
 
+	/** The Constant HEIGHT. */
+	public static final int HEIGHT = Configuration.getINSTANCE().getOutputHeight();
+
+	/** The Constant WIDTH. */
+	public static final int WIDTH = Configuration.getINSTANCE().getOutputWidth();
+
+	/** The Constant ERROR_CORRECTION_LEVEL. */
+	public static final ErrorCorrectionLevel ERROR_CORRECTION_LEVEL = Configuration.getINSTANCE()
+			.getECLevel();
+
+	/** The Constant SUFFIX. */
+	public static final String SUFFIX = Configuration.getINSTANCE().getPicFormat();
+
 	@Override
 	public void init() {
-		final File input = new File(parameters.getInput());
-		// check file
-		checkFile(input);
+
 		// detect file
 		detector.detect(input);
 		// split file.
@@ -47,8 +65,41 @@ public class QrCodeGenProvider implements QrCodeGen {
 
 	@Override
 	public void generate() {
-		// TODO
+		final BinaryQrCodeWriter writer = new BinaryQrCodeWriter();
+		try {
+			// gen leading frame
+			final BitMatrix matrix = writer.encode(leadingFrame.toBytes(), WIDTH, HEIGHT,
+					ERROR_CORRECTION_LEVEL);
+			final File output = new File(outputDir, String.valueOf(System.nanoTime()) + "."
+					+ SUFFIX);
+			writeBitMatrixToFile(output, matrix, SUFFIX);
+			// gen slice frame
+			for (SliceFrame sliceFrame : sliceFrames) {
+				final BitMatrix bitMatrix = writer.encode(sliceFrame.toBytes(), WIDTH, HEIGHT,
+						ERROR_CORRECTION_LEVEL);
+				final File outSlice = new File(outputDir, String.valueOf(System.nanoTime()) + "."
+						+ SUFFIX);
+				writeBitMatrixToFile(outSlice, bitMatrix, SUFFIX);
+			}
 
+		} catch (WriterException e) {
+			throw new RuntimeException("Can not encode file.");
+		}
+	}
+
+	/**
+	 * Write bit matrix to file.
+	 * 
+	 * @param out the out
+	 * @param matrix the matrix
+	 * @param format the format
+	 */
+	private void writeBitMatrixToFile(final File out, final BitMatrix matrix, final String format) {
+		try (final OutputStream os = new FileOutputStream(out);) {
+			MatrixToImageWriter.writeToStream(matrix, format, os);
+		} catch (IOException e) {
+			throw new RuntimeException("Can not write to output dir");
+		}
 	}
 
 	@Override
@@ -58,39 +109,27 @@ public class QrCodeGenProvider implements QrCodeGen {
 		detector.cleanup();
 	}
 
-	/**
-	 * Check file.
-	 * 
-	 * @param file the input
-	 */
-	private void checkFile(final File file) {
-		if (!file.exists() || !file.isFile() || !file.canRead()) {
-			throw new RuntimeException(String.format("%s is not accessible.", file.getName()));
-		}
+	public File getInput() {
+		return input;
 	}
 
-	/**
-	 * Check folder.
-	 * 
-	 * @param folder the folder
-	 */
-	private void checkFolder(final File folder) {
-		if (!folder.exists() || !folder.isDirectory() || !folder.canWrite()) {
-			throw new RuntimeException(String.format("%s is not accessible.", folder.getName()));
-		}
+	public void setInput(File input) {
+		this.input = input;
 	}
 
-	/**
-	 * Instantiates a new qr code gen provider.
-	 * 
-	 * @param aParameters the a parameters
-	 */
-	public QrCodeGenProvider(final Parameters aParameters) {
-		this.parameters = aParameters;
+	public File getOutputDir() {
+		return outputDir;
 	}
 
-	/** The parameters. */
-	private Parameters parameters;
+	public void setOutputDir(File outputDir) {
+		this.outputDir = outputDir;
+	}
+
+	/** The input. */
+	private File input;
+
+	/** The output dir. */
+	private File outputDir;
 
 	/** The leading frame. */
 	private LeadingFrame leadingFrame;
