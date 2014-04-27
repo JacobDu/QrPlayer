@@ -47,16 +47,4 @@ public class GenFactory {
         }
     }
 
-    /**
-     * Check folder.
-     * 
-     * @param folder the folder
-     */
-    private static void checkFolder(final File folder) {
-        if (!folder.exists()) {
-            throw new RuntimeException(String.format("%s folder is not accessible.",
-                    folder.getName()));
-        }
-    }
-
 }
