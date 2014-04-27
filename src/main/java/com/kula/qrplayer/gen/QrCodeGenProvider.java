@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedList;
 
 import com.google.zxing.WriterException;
@@ -23,126 +25,157 @@ import com.kula.qrplayer.util.Configuration;
  */
 public class QrCodeGenProvider implements QrCodeGen {
 
-	/** The Constant VERSION. */
-	public static final int VERSION = 0x01;
+    /** The Constant VERSION. */
+    public static final int VERSION = 0x01;
 
-	/** The Constant SLICE_DURATION. */
-	public static final int SLICE_DURATION = Configuration.getINSTANCE().getSliceDuration();
+    /** The Constant SLICE_DURATION. */
+    public static final int SLICE_DURATION = Configuration.getINSTANCE().getSliceDuration();
 
-	/** The Constant HEIGHT. */
-	public static final int HEIGHT = Configuration.getINSTANCE().getOutputHeight();
+    /** The Constant HEIGHT. */
+    public static final int HEIGHT = Configuration.getINSTANCE().getOutputHeight();
 
-	/** The Constant WIDTH. */
-	public static final int WIDTH = Configuration.getINSTANCE().getOutputWidth();
+    /** The Constant WIDTH. */
+    public static final int WIDTH = Configuration.getINSTANCE().getOutputWidth();
 
-	/** The Constant ERROR_CORRECTION_LEVEL. */
-	public static final ErrorCorrectionLevel ERROR_CORRECTION_LEVEL = Configuration.getINSTANCE()
-			.getECLevel();
+    /** The Constant ERROR_CORRECTION_LEVEL. */
+    public static final ErrorCorrectionLevel ERROR_CORRECTION_LEVEL = Configuration.getINSTANCE()
+            .getECLevel();
 
-	/** The Constant SUFFIX. */
-	public static final String SUFFIX = Configuration.getINSTANCE().getPicFormat();
+    /** The Constant SUFFIX. */
+    public static final String SUFFIX = Configuration.getINSTANCE().getPicFormat();
 
-	@Override
-	public void init() {
+    @Override
+    public void init() {
 
-		// detect file
-		detector.detect(input);
-		// split file.
-		for (SliceFrame frame : detector) {
-			sliceFrames.add(frame);
-		}
-		// build leading frame
-		leadingFrame = new LeadingFrame();
-		leadingFrame.setVersion(VERSION);
-		leadingFrame.setOrigFileName(detector.getFileName());
-		leadingFrame.setOrigFileSize(detector.getFileSize());
-		leadingFrame.setComprType(detector.getCompressType());
-		leadingFrame.setSliceCount(detector.getSliceCount());
-		leadingFrame.setCompressedSize(detector.getCompressedSize());
-		// set duration
-		leadingFrame.setSliceDuration(SLICE_DURATION);
-	}
+        // detect file
+        detector.detect(input);
+        // split file.
+        for (SliceFrame frame : detector) {
+            sliceFrames.add(frame);
+        }
+        // build leading frame
+        leadingFrame = new LeadingFrame();
+        leadingFrame.setVersion(VERSION);
+        leadingFrame.setOrigFileName(detector.getFileName());
+        leadingFrame.setOrigFileSize(detector.getFileSize());
+        leadingFrame.setComprType(detector.getCompressType());
+        leadingFrame.setSliceCount(detector.getSliceCount());
+        leadingFrame.setCompressedSize(detector.getCompressedSize());
+        // set duration
+        leadingFrame.setSliceDuration(SLICE_DURATION);
+    }
 
-	@Override
-	public void generate() {
-		final BinaryQrCodeWriter writer = new BinaryQrCodeWriter();
-		try {
-			// gen leading frame
-			final BitMatrix matrix = writer.encode(leadingFrame.toBytes(), WIDTH, HEIGHT,
-					ERROR_CORRECTION_LEVEL);
-			final File output = new File(outputDir, String.valueOf(System.nanoTime()) + "."
-					+ SUFFIX);
-			writeBitMatrixToFile(output, matrix, SUFFIX);
-			// gen slice frame
-			for (SliceFrame sliceFrame : sliceFrames) {
-				final BitMatrix bitMatrix = writer.encode(sliceFrame.toBytes(), WIDTH, HEIGHT,
-						ERROR_CORRECTION_LEVEL);
-				final File outSlice = new File(outputDir, String.valueOf(System.nanoTime()) + "."
-						+ SUFFIX);
-				writeBitMatrixToFile(outSlice, bitMatrix, SUFFIX);
-			}
+    @Override
+    public void generate() {
+        final BinaryQrCodeWriter writer = new BinaryQrCodeWriter();
+        try {
+            // gen leading frame
+            final BitMatrix matrix = writer.encode(leadingFrame.toBytes(), WIDTH, HEIGHT,
+                    ERROR_CORRECTION_LEVEL);
+            final File output = new File(outputDir, generateName(0) + "." + SUFFIX);
+            writeBitMatrixToFile(output, matrix, SUFFIX);
+            // gen slice frame
+            int index = 1;
+            for (SliceFrame sliceFrame : sliceFrames) {
 
-		} catch (WriterException e) {
-			throw new RuntimeException("Can not encode file.");
-		}
-	}
+                final BitMatrix bitMatrix = writer.encode(sliceFrame.toBytes(), WIDTH, HEIGHT,
+                        ERROR_CORRECTION_LEVEL);
+                final File outSlice = new File(outputDir, generateName(index) + "." + SUFFIX);
+                writeBitMatrixToFile(outSlice, bitMatrix, SUFFIX);
+                index++;
+            }
 
-	/**
-	 * Write bit matrix to file.
-	 * 
-	 * @param out the out
-	 * @param matrix the matrix
-	 * @param format the format
-	 */
-	private void writeBitMatrixToFile(final File out, final BitMatrix matrix, final String format) {
-		try (final OutputStream os = new FileOutputStream(out);) {
-			MatrixToImageWriter.writeToStream(matrix, format, os);
-		} catch (IOException e) {
-			throw new RuntimeException("Can not write to output dir");
-		}
-	}
+        } catch (WriterException e) {
+            throw new RuntimeException("Can not encode file. Cause:" + e.getMessage());
+        }
+    }
 
-	@Override
-	public void cleanup() {
-		leadingFrame = null;
-		sliceFrames.clear();
-		detector.cleanup();
-	}
+    /**
+     * Generate name.
+     * 
+     * @return the string
+     */
+    private String generateName(final int index) {
+        return String.format("%s_%s", String.valueOf(index), new SimpleDateFormat(
+                "yyyyMMddHHmmss").format(new java.util.Date(new Date().getTime())));
+    }
 
-	public File getInput() {
-		return input;
-	}
+    /**
+     * Write bit matrix to file.
+     * 
+     * @param out the out
+     * @param matrix the matrix
+     * @param format the format
+     */
+    private void writeBitMatrixToFile(final File out, final BitMatrix matrix, final String format) {
+        try (final OutputStream os = new FileOutputStream(out);) {
+            MatrixToImageWriter.writeToStream(matrix, format, os);
+        } catch (IOException e) {
+            throw new RuntimeException("Can not write to output dir");
+        }
+    }
 
-	public void setInput(File input) {
-		this.input = input;
-	}
+    @Override
+    public void cleanup() {
+        leadingFrame = null;
+        sliceFrames.clear();
+        detector.cleanup();
+    }
 
-	public File getOutputDir() {
-		return outputDir;
-	}
+    /**
+     * Gets the input.
+     * 
+     * @return the input
+     */
+    public File getInput() {
+        return input;
+    }
 
-	public void setOutputDir(File outputDir) {
-		this.outputDir = outputDir;
-	}
+    /**
+     * Sets the input.
+     * 
+     * @param input the new input
+     */
+    public void setInput(File input) {
+        this.input = input;
+    }
 
-	/** The input. */
-	private File input;
+    /**
+     * Gets the output dir.
+     * 
+     * @return the output dir
+     */
+    public File getOutputDir() {
+        return outputDir;
+    }
 
-	/** The output dir. */
-	private File outputDir;
+    /**
+     * Sets the output dir.
+     * 
+     * @param outputDir the new output dir
+     */
+    public void setOutputDir(File outputDir) {
+        this.outputDir = outputDir;
+    }
 
-	/** The leading frame. */
-	private LeadingFrame leadingFrame;
+    /** The input. */
+    private File input;
 
-	/** The slice frames. */
-	private Collection<SliceFrame> sliceFrames;
+    /** The output dir. */
+    private File outputDir;
 
-	/** The detector. */
-	private FileDetectable detector;
+    /** The leading frame. */
+    private LeadingFrame leadingFrame;
 
-	{
-		sliceFrames = new LinkedList<SliceFrame>();
-		detector = new FileDetector();
-	}
+    /** The slice frames. */
+    private Collection<SliceFrame> sliceFrames;
+
+    /** The detector. */
+    private FileDetectable detector;
+
+    {
+        sliceFrames = new LinkedList<SliceFrame>();
+        detector = new FileDetector();
+    }
 
 }

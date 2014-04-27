@@ -7,7 +7,7 @@ public final class ParametersData implements Parameters {
 
     @Override
     public String getInput() {
-        return null;
+        return input;
     }
 
     /**
@@ -21,7 +21,7 @@ public final class ParametersData implements Parameters {
 
     @Override
     public String getOutput() {
-        return null;
+        return output;
     }
 
     /**
