@@ -4,7 +4,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+<<<<<<< HEAD
 import java.util.Arrays;
+=======
+>>>>>>> c0cdea07c673962c2f12c1e50e37ab092b0e9a3d
 import java.util.Collection;
 import java.util.LinkedList;
 
@@ -22,7 +25,10 @@ import com.google.zxing.LuminanceSource;
 import com.google.zxing.NotFoundException;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
+<<<<<<< HEAD
 import com.kula.qrplayer.entity.LeadingFrame;
+=======
+>>>>>>> c0cdea07c673962c2f12c1e50e37ab092b0e9a3d
 import com.kula.qrplayer.qrcode.BinaryQrCodeReader;
 import com.kula.qrplayer.util.Configuration;
 
@@ -48,6 +54,7 @@ public class QrCodeInterpreterProvider implements QrCodeInterpreter {
      * Find out leading frame.
      */
     private void findOutLeadingFrame() {
+<<<<<<< HEAD
         for (ByteBuffer buffer : entities) {
             final byte[] magic = new byte[4];
             buffer.get(magic);
@@ -57,6 +64,9 @@ public class QrCodeInterpreterProvider implements QrCodeInterpreter {
             }
         }
         throw new RuntimeException("Can not find leading frame.");
+=======
+        // TODO Auto-generated method stub
+>>>>>>> c0cdea07c673962c2f12c1e50e37ab092b0e9a3d
     }
 
     /**
@@ -131,9 +141,12 @@ public class QrCodeInterpreterProvider implements QrCodeInterpreter {
         this.inputDir = inputDir;
     }
 
+<<<<<<< HEAD
     /** The leading frame. */
     private LeadingFrame leadingFrame;
 
+=======
+>>>>>>> c0cdea07c673962c2f12c1e50e37ab092b0e9a3d
     /** The input dir. */
     private File inputDir;
 
