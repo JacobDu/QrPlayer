@@ -1,8 +1,10 @@
 package com.kula.qrplayer.interpret;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
@@ -49,10 +51,12 @@ public class QrCodeInterpreterProvider implements QrCodeInterpreter {
      */
     private void findOutLeadingFrame() {
         for (ByteBuffer buffer : entities) {
+            buffer.mark();
             final byte[] magic = new byte[4];
             buffer.get(magic);
+            buffer.reset();
             if (Arrays.equals(magic, LeadingFrame.MAGIC)) {
-                leadingFrame = new LeadingFrame();
+                leadingFrame = LeadingFrame.createLeadingFrame(buffer);
                 return;
             }
         }
@@ -85,8 +89,38 @@ public class QrCodeInterpreterProvider implements QrCodeInterpreter {
 
     @Override
     public void interpret() {
-        // TODO Auto-generated method stub
+        checkLeadingFrame();
 
+        final File outFile = new File(output, leadingFrame.getOrigFileName());
+        final OutputStream stream = new ByteArrayOutputStream();
+        final int index = 0;
+        try {
+            for (ByteBuffer buffer : entities) {
+                final int i = buffer.getInt();
+                if (i == index) {
+                    stream.write(buffer.array());
+                }
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Check leading frame.
+     */
+    private void checkLeadingFrame() {
+        if (entities.size() <= leadingFrame.getSliceCount()) {
+            throw new RuntimeException("lack of slice.");
+        }
+    }
+
+    public static void main(String[] args) {
+        byte[] ba = new byte[] { 1, 2, 3, 4, 5 };
+        ByteBuffer buffer = ByteBuffer.wrap(ba);
+        buffer.getShort();
+        System.out.println(Arrays.toString(buffer.array()));
     }
 
     @Override
