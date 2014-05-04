@@ -1,12 +1,16 @@
 package com.kula.qrplayer.interpret;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 
@@ -49,10 +53,13 @@ public class QrCodeInterpreterProvider implements QrCodeInterpreter {
      */
     private void findOutLeadingFrame() {
         for (ByteBuffer buffer : entities) {
+            buffer.mark();
             final byte[] magic = new byte[4];
             buffer.get(magic);
+            buffer.reset();
             if (Arrays.equals(magic, LeadingFrame.MAGIC)) {
-                leadingFrame = new LeadingFrame();
+                leadingFrame = LeadingFrame.createLeadingFrame(buffer);
+                entities.remove(buffer);
                 return;
             }
         }
@@ -85,14 +92,42 @@ public class QrCodeInterpreterProvider implements QrCodeInterpreter {
 
     @Override
     public void interpret() {
-        // TODO Auto-generated method stub
+        checkLeadingFrame();
+        final File outFile = new File(output, leadingFrame.getOrigFileName());
 
+        final Map<Integer, byte[]> map = new HashMap<>();
+        for (ByteBuffer buffer : entities) {
+            final int index = buffer.getInt();
+            final int remaining = buffer.remaining();
+            final byte[] data = new byte[remaining];
+            buffer.get(data);
+            map.put(index, data);
+        }
+
+        try (final FileOutputStream stream = new FileOutputStream(outFile);
+                final ByteArrayOutputStream baos = new ByteArrayOutputStream();) {
+            for (int i = 0; i < leadingFrame.getSliceCount(); i++) {
+                baos.write(map.get(i));
+            }
+            stream.write(baos.toByteArray());
+            stream.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Check leading frame.
+     */
+    private void checkLeadingFrame() {
+        if (entities.size() != leadingFrame.getSliceCount()) {
+            throw new RuntimeException("lack of slice.");
+        }
     }
 
     @Override
     public void cleanup() {
-        // TODO Auto-generated method stub
-
+        entities.clear();
     }
 
     /**
