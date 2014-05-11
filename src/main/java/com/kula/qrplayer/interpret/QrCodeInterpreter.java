@@ -1,8 +1,9 @@
 package com.kula.qrplayer.interpret;
 
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -25,6 +26,7 @@ import com.google.zxing.NotFoundException;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
 import com.kula.qrplayer.entity.LeadingFrame;
+import com.kula.qrplayer.entity.SliceFrame;
 import com.kula.qrplayer.entry.Engine;
 import com.kula.qrplayer.qrcode.BinaryQrCodeReader;
 import com.kula.qrplayer.util.Configuration;
@@ -50,7 +52,7 @@ public class QrCodeInterpreter implements Engine {
     /**
      * Find out leading frame.
      */
-    private void findOutLeadingFrame() {
+    protected void findOutLeadingFrame() {
         for (ByteBuffer buffer : entities) {
             buffer.mark();
             final byte[] magic = new byte[4];
@@ -58,6 +60,7 @@ public class QrCodeInterpreter implements Engine {
             buffer.reset();
             if (Arrays.equals(magic, LeadingFrame.MAGIC)) {
                 leadingFrame = LeadingFrame.createLeadingFrame(buffer);
+                entities.remove(buffer);
                 return;
             }
         }
@@ -69,13 +72,13 @@ public class QrCodeInterpreter implements Engine {
      * 
      * @param aInputDir the a input dir
      */
-    private void loadPictures(final File aInputDir) {
+    protected void loadPictures(final File aInputDir) {
         final IOFileFilter fileFilter = FileFilterUtils
                 .suffixFileFilter(SUFFIX, IOCase.INSENSITIVE);
         final Collection<File> pictures = FileUtils.listFiles(aInputDir, fileFilter, null);
         for (File file : pictures) {
             try {
-                final BufferedImage image = ImageIO.read(output);
+                final BufferedImage image = ImageIO.read(file);
                 final LuminanceSource source = new BufferedImageLuminanceSource(image);
                 final BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
                 final byte[] result = reader.decode(bitmap);
@@ -93,18 +96,26 @@ public class QrCodeInterpreter implements Engine {
         checkLeadingFrame();
 
         final File outFile = new File(output, leadingFrame.getOrigFileName());
-        final OutputStream stream = new ByteArrayOutputStream();
-        final int index = 0;
-        try {
+        final SliceFrame[] slices = new SliceFrame[leadingFrame.getSliceCount()];
+        try (final OutputStream stream = new BufferedOutputStream(new FileOutputStream(outFile,
+                true))) {
+            // load bytes
             for (ByteBuffer buffer : entities) {
                 final int i = buffer.getInt();
-                if (i == index) {
-                    stream.write(buffer.array());
-                }
+                final byte[] b = new byte[buffer.remaining()];
+                buffer.get(b);
+                slices[i] = new SliceFrame(i, b);
             }
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            // splice bytes
+            for (SliceFrame slice : slices) {
+                stream.write(slice.getSlice());
+            }
+            stream.flush();
+            stream.close();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Can not convert qrcode pictures to file. Cause: "
+                    + e.getMessage());
         }
     }
 
@@ -112,7 +123,7 @@ public class QrCodeInterpreter implements Engine {
      * Check leading frame.
      */
     private void checkLeadingFrame() {
-        if (entities.size() <= leadingFrame.getSliceCount()) {
+        if (entities.size() != leadingFrame.getSliceCount()) {
             throw new RuntimeException("lack of slice.");
         }
     }

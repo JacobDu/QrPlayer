@@ -11,54 +11,66 @@ import org.apache.commons.lang3.ArrayUtils;
  */
 public class SliceFrame {
 
-	/**
-	 * Gets the index.
-	 * 
-	 * @return the index
-	 */
-	public int getIndex() {
-		return index;
-	}
+    /**
+     * Gets the index.
+     * 
+     * @return the index
+     */
+    public int getIndex() {
+        return index;
+    }
 
-	/**
-	 * Sets the index.
-	 * 
-	 * @param index the new index
-	 */
-	public void setIndex(int index) {
-		this.index = index;
-	}
+    /**
+     * Sets the index.
+     * 
+     * @param index the new index
+     */
+    public void setIndex(int index) {
+        this.index = index;
+    }
 
-	/**
-	 * Gets the slice.
-	 * 
-	 * @return the slice
-	 */
-	public byte[] getSlice() {
-		return slice;
-	}
+    /**
+     * Gets the slice.
+     * 
+     * @return the slice
+     */
+    public byte[] getSlice() {
+        return slice;
+    }
 
-	/**
-	 * Sets the slice.
-	 * 
-	 * @param slice the new slice
-	 */
-	public void setSlice(byte[] slice) {
-		this.slice = slice;
-	}
+    /**
+     * Sets the slice.
+     * 
+     * @param slice the new slice
+     */
+    public void setSlice(byte[] slice) {
+        this.slice = slice;
+    }
 
-	/**
-	 * To bytes.
-	 * 
-	 * @return the byte[]
-	 */
-	public byte[] toBytes() {
-		return ArrayUtils.addAll(ByteBuffer.allocate(4).putInt(index).array(), slice);
-	}
+    /**
+     * Instantiates a new slice frame.
+     * 
+     * @param index the index
+     * @param slice the slice
+     */
+    public SliceFrame(final int index, final byte[] slice) {
+        super();
+        this.index = index;
+        this.slice = slice;
+    }
 
-	/** The index. base on ZREO */
-	private int index;
+    /**
+     * To bytes.
+     * 
+     * @return the byte[]
+     */
+    public byte[] toBytes() {
+        return ArrayUtils.addAll(ByteBuffer.allocate(4).putInt(index).array(), slice);
+    }
 
-	/** The matrix. */
-	private byte[] slice;
+    /** The index. base on ZREO */
+    private int index;
+
+    /** The matrix. */
+    private byte[] slice;
 }
