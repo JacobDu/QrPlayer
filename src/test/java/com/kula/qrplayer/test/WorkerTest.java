@@ -20,6 +20,7 @@ public class WorkerTest {
     @Test
     public void test() {
         Worker.main(new String[] {
+                "-m", "encode",
                 "-i", INPUT_FILE,
                 "-o", OUTPUT_DIR,
         });

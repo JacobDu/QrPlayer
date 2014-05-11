@@ -20,6 +20,9 @@ public final class Command {
      */
     enum Cmd {
 
+        /** The mode. */
+        mode("m"),
+
         /** The input. */
         input("i"),
 
@@ -64,6 +67,10 @@ public final class Command {
         // o, output
         options.addOption(Cmd.output.getAbbr(), Cmd.output.name(), true,
                 "Output folder. This option is optional. Default for input folder.");
+        // m, mode
+        options.addOption(Cmd.mode.getAbbr(), Cmd.mode.name(), true,
+                "Engine mode. 'encode' for generate qrCode. 'decode' for convert qrCode to source file.");
+
         // v, version
         options.addOption(Cmd.version.getAbbr(), Cmd.version.name(), false, "display version.");
         // h, help
@@ -88,6 +95,7 @@ public final class Command {
         // build parameter
         parameters.setInput(cmdLine.getOptionValue(Cmd.input.name()));
         parameters.setOutput(cmdLine.getOptionValue(Cmd.output.name(), StringUtils.EMPTY));
+        parameters.setMode(cmdLine.getOptionValue(Cmd.mode.name()));
 
         return parameters;
     }

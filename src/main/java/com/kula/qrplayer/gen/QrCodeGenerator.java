@@ -15,6 +15,7 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.kula.qrplayer.entity.LeadingFrame;
 import com.kula.qrplayer.entity.SliceFrame;
+import com.kula.qrplayer.entry.Engine;
 import com.kula.qrplayer.qrcode.BinaryQrCodeWriter;
 import com.kula.qrplayer.util.Configuration;
 
@@ -23,7 +24,7 @@ import com.kula.qrplayer.util.Configuration;
  * 
  * @version 1.0
  */
-public class QrCodeGenProvider implements QrCodeGen {
+public class QrCodeGenerator implements Engine {
 
     /** The Constant VERSION. */
     public static final int VERSION = 0x01;
@@ -45,7 +46,7 @@ public class QrCodeGenProvider implements QrCodeGen {
     public static final String SUFFIX = Configuration.getINSTANCE().getPicFormat();
 
     @Override
-    public void init() {
+    public void prepare() {
 
         // detect file
         detector.detect(input);
@@ -66,7 +67,7 @@ public class QrCodeGenProvider implements QrCodeGen {
     }
 
     @Override
-    public void generate() {
+    public void fire() {
         final BinaryQrCodeWriter writer = new BinaryQrCodeWriter();
         try {
             // gen leading frame
@@ -113,13 +114,6 @@ public class QrCodeGenProvider implements QrCodeGen {
         } catch (IOException e) {
             throw new RuntimeException("Can not write to output dir");
         }
-    }
-
-    @Override
-    public void cleanup() {
-        leadingFrame = null;
-        sliceFrames.clear();
-        detector.cleanup();
     }
 
     /**

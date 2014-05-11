@@ -20,4 +20,11 @@ public interface Parameters {
      * @return the output
      */
     String getOutput();
+
+    /**
+     * Gets the mode.
+     * 
+     * @return the mode
+     */
+    String getMode();
 }
