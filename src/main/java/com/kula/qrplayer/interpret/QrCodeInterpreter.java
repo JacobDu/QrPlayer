@@ -17,6 +17,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOCase;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.xerial.snappy.Snappy;
 
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.ChecksumException;
@@ -25,6 +27,7 @@ import com.google.zxing.LuminanceSource;
 import com.google.zxing.NotFoundException;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
+import com.kula.qrplayer.entity.CompressType;
 import com.kula.qrplayer.entity.LeadingFrame;
 import com.kula.qrplayer.entity.SliceFrame;
 import com.kula.qrplayer.entry.Engine;
@@ -97,8 +100,8 @@ public class QrCodeInterpreter implements Engine {
 
         final File outFile = new File(output, leadingFrame.getOrigFileName());
         final SliceFrame[] slices = new SliceFrame[leadingFrame.getSliceCount()];
-        try (final OutputStream stream = new BufferedOutputStream(new FileOutputStream(outFile,
-                true))) {
+        try (final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                final OutputStream stream = new BufferedOutputStream(new FileOutputStream(outFile));) {
             // load bytes
             for (ByteBuffer buffer : entities) {
                 final int i = buffer.getInt();
@@ -108,14 +111,31 @@ public class QrCodeInterpreter implements Engine {
             }
             // splice bytes
             for (SliceFrame slice : slices) {
-                stream.write(slice.getSlice());
+                baos.write(slice.getSlice());
             }
-            stream.flush();
-            stream.close();
+
+            stream.write(uncompress(leadingFrame.getComprType(), baos.toByteArray()));
 
         } catch (Exception e) {
             throw new RuntimeException("Can not convert qrcode pictures to file. Cause: "
                     + e.getMessage());
+        }
+    }
+
+    /**
+     * Decompress.
+     *
+     * @param comprType the compr type
+     * @param byteArray the byte array
+     * @return the byte[]
+     * @throws IOException
+     */
+    private byte[] uncompress(final CompressType comprType, final byte[] data) throws IOException {
+        switch (comprType) {
+        case snappy:
+            return Snappy.uncompress(data);
+        default:
+            return data;
         }
     }
 

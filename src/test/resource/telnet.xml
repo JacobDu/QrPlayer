@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<protocol xmlns="http://www.netis.com.cn/xdl/tag" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:buf="http://www.netis.com.cn/xdl/buf" xmlns:core="http://www.netis.com.cn/xdl/core"
+	xsi:schemaLocation="http://www.netis.com.cn/xdl/tag xdl.decode.xsd 
+              http://www.netis.com.cn/xdl/buf xdl.buf.xsd
+              http://www.netis.com.cn/xdl/core xdl.core.xsd">
+
+	<!-- register -->
+	<register>
+		<name>telnet xdl</name>
+		<desc>telnet decoder of cbod protocol</desc>
+		<priority>2000</priority>
+		<baseOn>tcp</baseOn>
+		<vendor>netis</vendor>
+		<version>1.0.0</version>
+	</register>
+
+	<!-- do not support auto detect -->
+
+	<!-- decode buffer -->
+
+	<buffer>
+		<field name="IAC" cache="true" record="false">
+			<L>1</L>
+			<T>UBYTE</T>
+			<V>SHORT</V>
+		</field>
+
+		<if test="${IAC == 255}">
+			<!-- IAC buffer -->
+			<core:decodeStatus status="PduBegin" />
+			<set var="messageCount" value="${0}" />
+			<while test="${true}">
+				<buf:hasRemaining var="hasRemaining" />
+				<if test="${hasRemaining == false}">
+					<break />
+				</if>
+
+				<if test="${messageCount > 0}">
+					<core:newMessage />
+				</if>
+
+				<set var="messageCount" value="${messageCount + 1}" />
+
+				<buf:getPosition var="messageStartOffset" />
+				<set target="decodeStatus" property="messageStartOffset" value="${messageStartOffset}" />
+
+				<field name="Command" cache="true">
+					<T>UBYTE</T>
+					<V>SHORT</V>
+				</field>
+
+				<if test="${Command == 240}">
+					<!-- SE command dosn't has option -->
+					<field name="NextIAC" cache="true" record="false">
+						<T>UBYTE</T>
+						<V>SHORT</V>
+					</field>
+					<continue help="SE Command" />
+				</if>
+
+				<field name="Option">
+					<T>UBYTE</T>
+					<V>SHORT</V>
+				</field>
+
+				<!-- set buffer position after next IAC -->
+				<while test="${true}">
+					<buf:hasRemaining var="hasRemaining" />
+					<if test="${hasRemaining == false}">
+						<break />
+					</if>
+					<field name="NextIAC" cache="true" record="false">
+						<T>UBYTE</T>
+						<V>SHORT</V>
+					</field>
+					<if test="${NextIAC == 255}">
+						<break help="NextIAC" />
+					</if>
+				</while>
+			</while>
+			<core:decodeStatus status="LayerComplete" />
+			<else>
+				<!-- set buffer position to begin -->
+				<buf:getPosition var="position" />
+				<buf:setPosition value="${position - 1 }" />
+
+				<core:getRRA var="rra" />
+
+				<if test="${rra == 'req'}">
+					<!-- request buffer -->
+					<set var="LayerBegin" value='0' />
+					<core:getSameSideFlowValues key="LayerBegin"
+						var="LayerBegin" />
+					<if test="${LayerBegin == '1'}">
+						<core:decodeStatus status="LayerBegin" />
+						<core:setSameSideFlowValues key="LayerBegin"
+							value="0" />
+					</if>
+
+					<buf:getRemaining var="remaining" />
+					<!-- check truncated by length -->
+					<if test="${remaining &lt;= 2}">
+						<throw exception="BufferTruncatedException" />
+					</if>
+
+					<!-- check truncated by \r\n -->
+					<buf:getLimit var="limit" />
+					<buf:getPosition var="position" />
+					<buf:setPosition value="${limit - 2}" />
+					<field name="end" cache="true" record="false">
+						<V>SHORT</V>
+						<T>SHORT</T>
+					</field>
+					<if test="${end != 3338}">
+						<throw exception="BufferTruncatedException" />
+					</if>
+
+					<!-- set buffer limit to ignore \r\n -->
+					<buf:setPosition value="${position}" />
+					<buf:setLimit value="${limit - 2}" />
+
+					<set var="RespType" value="" />
+					<core:getPeerSideFlowValues key="RespType" var="RespType" />
+
+					<new var="ReqBuilder" class="StringBuilder" />
+
+					<!-- buffer to string -->
+					<while test="${true}">
+						<buf:hasRemaining var="hasRemaining" />
+						<if test="${hasRemaining == false}">
+							<break />
+						</if>
+
+						<!-- get char value -->
+						<field name="tempChar" cache="true" record="false">
+							<L>1</L>
+						</field>
+
+						<!-- get unsigned byte value -->
+						<buf:getPosition var="position" />
+						<buf:setPosition value="${position - 1}" />
+						<field name="tempByte" cache="true" record="false">
+							<T>UBYTE</T>
+							<V>SHORT</V>
+						</field>
+
+						<buf:setPosition value="${position}" />
+						<if test="${tempByte == 8}">
+							<!-- Backspace by \b -->
+							<set var="deleteIndex" value="${ReqBuilder.length() - 1}" />
+							<set var="ReqBuilder" value="${ReqBuilder.deleteCharAt(deleteIndex)}" />
+							<else>
+								<set var="ReqBuilder" value="${ReqBuilder.append(tempChar)}" />
+							</else>
+						</if>
+					</while>
+
+					<!-- record by RespType -->
+					<set var="Req" value="${str:trim(ReqBuilder.toString())}" />
+					<if test="${str:equals(RespType,'login')}">
+						<core:record key="USRID" value="${Req}" />
+					</if>
+					<if test="${str:equals(RespType,'cmd')}">
+						<core:record key="Cmd" value="${Req}" />
+					</if>
+					<if test="${str:equals(RespType,'password')}">
+						<core:record key="Password" value="*****" />
+					</if>
+					<core:setPeerSideFlowValues key="RespType"
+						value="0" />
+					<core:decodeStatus status="LayerComplete" />
+				</if>
+				<if test="${rra == 'resp'}">
+					<!-- response buffer -->
+					<new var="SvrRespBuilder" class="StringBuilder" />
+
+					<!-- buffer to string -->
+					<while test="${true}">
+						<buf:hasRemaining var="hasRemaining" />
+						<if test="${hasRemaining == false}">
+							<break />
+						</if>
+						<field name="temp" cache="true" record="false">
+							<L>1</L>
+						</field>
+						<set var="SvrRespBuilder" value="${SvrRespBuilder.append(temp)}" />
+					</while>
+
+					<!-- record value and RespType -->
+					<set var="SvrResp" value="${str:trim(SvrRespBuilder.toString())}" />
+					<if test="${str:endsWith(SvrResp,'login:')}">
+						<core:record key="SvrResp" value="${SvrResp}" />
+						<core:setSameSideFlowValues key="RespType"
+							value="login" />
+						<core:setPeerSideFlowValues key="LayerBegin"
+							value="1" />
+					</if>
+					<if test="${str:endsWith(SvrResp,'Password:')}">
+						<core:record key="SvrResp" value="${SvrResp}" />
+						<core:setSameSideFlowValues key="RespType"
+							value="password" />
+						<core:setPeerSideFlowValues key="LayerBegin"
+							value="1" />
+					</if>
+					<if test="${str:endsWith(SvrResp,'$')}">
+						<core:record key="SvrResp" value="${SvrResp}" />
+						<core:setSameSideFlowValues key="RespType"
+							value="cmd" />
+						<core:setPeerSideFlowValues key="LayerBegin"
+							value="1" />
+
+					</if>
+					<core:decodeStatus status="LayerComplete" />
+
+				</if>
+			</else>
+		</if>
+
+	</buffer>
+</protocol>	

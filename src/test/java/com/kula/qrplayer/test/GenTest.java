@@ -12,7 +12,7 @@ import com.kula.qrplayer.entry.Worker;
 public class GenTest {
 
     /** The Constant INPUT_FILE. */
-    public static final String INPUT_FILE = "./src/test/resource/analyze.py";
+    public static final String INPUT_FILE = "./src/test/resource/telnet.xml";
 
     /** The Constant OUTPUT_DIR. */
     public static final String OUTPUT_DIR = "./path/to/";
