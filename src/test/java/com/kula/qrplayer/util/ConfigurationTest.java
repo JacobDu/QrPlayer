@@ -8,6 +8,6 @@ public class ConfigurationTest {
 
     @Test
     public void test() {
-        Assert.assertEquals(1024, Configuration.getINSTANCE().getMaxFileSize());
+        Assert.assertEquals(128, Configuration.getINSTANCE().getMaxFileSize());
     }
 }
