@@ -1,5 +1,6 @@
 /bin
 /target
+/path
 
 *.class
 
@@ -17,4 +18,3 @@ hs_err_pid*
 .classpath
 .project
 .settings/*
-path/to/
