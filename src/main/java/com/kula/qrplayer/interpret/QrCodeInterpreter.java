@@ -97,8 +97,8 @@ public class QrCodeInterpreter implements Engine {
     @Override
     public void fire() {
         checkLeadingFrame();
-
-        final File outFile = new File(output, leadingFrame.getOrigFileName());
+        final String finalName = leadingFrame.getOrigFileName();
+        final File outFile = new File(output, finalName);
         final SliceFrame[] slices = new SliceFrame[leadingFrame.getSliceCount()];
         try (final ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 final OutputStream stream = new BufferedOutputStream(new FileOutputStream(outFile));) {
@@ -124,7 +124,7 @@ public class QrCodeInterpreter implements Engine {
 
     /**
      * Decompress.
-     *
+     * 
      * @param comprType the compr type
      * @param byteArray the byte array
      * @return the byte[]

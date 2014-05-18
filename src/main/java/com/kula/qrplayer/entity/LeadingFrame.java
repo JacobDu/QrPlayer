@@ -3,7 +3,6 @@ package com.kula.qrplayer.entity;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 
 /**
@@ -88,7 +87,7 @@ public class LeadingFrame {
      * 
      * @param origFileName the new orig file name
      */
-    public void setOrigFileName(String origFileName) {
+    public void setOrigFileName(final String origFileName) {
         this.origFileName = origFileName;
     }
 
@@ -169,7 +168,7 @@ public class LeadingFrame {
             result.write(ByteBuffer.allocate(8).putLong(sliceDuration).array());
             result.write(ByteBuffer.allocate(4).putInt(origFileSize).array());
             result.write(ByteBuffer.allocate(4).putInt(compressedSize).array());
-            final byte[] fileName = Charset.forName("utf8").encode(origFileName).array();
+            final byte[] fileName = origFileName.getBytes();
             result.write(ByteBuffer.allocate(4).putInt(fileName.length).array());
             result.write(fileName);
             return result.toByteArray();
@@ -209,7 +208,7 @@ public class LeadingFrame {
         final int fileNameLen = buffer.getInt();
         final byte[] fileNameArray = new byte[fileNameLen];
         buffer.get(fileNameArray);
-        result.setOrigFileName(new String(fileNameArray, Charset.forName("utf8")));
+        result.setOrigFileName(new String(fileNameArray));
         return result;
     }
 
